@@ -4,7 +4,7 @@ resource "aws_lambda_function" "validate_code" {
   runtime       = "python3.8"
   role          = aws_iam_role.lambda_execution_role.arn
 
-  filename      = "lambda/validate_code.7z"  # The Lambda function code (ZIP file)
+  filename      = "lambda/validate_code.zip"  # The Lambda function code (ZIP file)
 }
 
 resource "aws_iam_role" "lambda_execution_role" {
