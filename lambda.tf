@@ -81,7 +81,7 @@ resource "aws_lambda_function" "validate_code" {
 
 # Lambda Function for Running Tests
 resource "aws_lambda_function" "run_tests" {
-  filename         = "Run_Tests.zip"
+  filename         = "RunTests.zip"
   function_name    = "run_tests"
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
