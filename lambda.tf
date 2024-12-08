@@ -86,7 +86,7 @@ resource "aws_lambda_function" "run_tests" {
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
   runtime          = "nodejs14.x"
-  source_code_hash = filebase64sha256("run_tests.zip")
+  source_code_hash = filebase64sha256("RunTests.zip")
 }
 
 # Step Functions Permissions Policy (referencing Lambda functions now)
