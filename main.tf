@@ -62,58 +62,6 @@ resource "aws_iam_role_policy_attachment" "codedeploy_policy_attach" {
   policy_arn = aws_iam_policy.codedeploy_policy.arn
 }
 
-# Create IAM Role for Step Functions Execution
-resource "aws_iam_role" "step_functions_execution_role" {
-  name = "step-functions-execution-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action    = "sts:AssumeRole"
-        Principal = {
-          Service = "states.amazonaws.com"
-        }
-        Effect    = "Allow"
-        Sid       = ""
-      },
-    ]
-  })
-}
-
-# Attach necessary policies for Step Functions Execution Role
-resource "aws_iam_policy" "step_functions_policy" {
-  name        = "StepFunctionsPermissions"
-  description = "Permissions for Step Functions to invoke Lambda and CodeDeploy"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = ["lambda:InvokeFunction"]
-        Effect   = "Allow"
-        Resource = [
-          aws_lambda_function.validate_code.arn,
-          aws_lambda_function.run_tests.arn
-        ]
-      },
-      {
-        Action   = ["codedeploy:CreateDeployment", "codedeploy:GetDeployment"]
-        Effect   = "Allow"
-        Resource = [
-          aws_codedeploy_deployment_group.staging_deployment.arn,
-          aws_codedeploy_deployment_group.production_deployment.arn
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "step_functions_policy_attach" {
-  role       = aws_iam_role.step_functions_execution_role.name
-  policy_arn = aws_iam_policy.step_functions_policy.arn
-}
-
 # Step Functions State Machine Definition
 resource "aws_sfn_state_machine" "deployment" {
   name     = "DeploymentStateMachine"
