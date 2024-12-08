@@ -71,7 +71,7 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
 
 # Lambda Function for Code Validation
 resource "aws_lambda_function" "validate_code" {
-  filename         = "lambda/validate_code.zip"
+  filename         = "validate_code.zip"
   function_name    = "validate_code"
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
@@ -81,7 +81,7 @@ resource "aws_lambda_function" "validate_code" {
 
 # Lambda Function for Running Tests
 resource "aws_lambda_function" "run_tests" {
-  filename         = "Tests/run_tests.zip"
+  filename         = "Run_Tests.zip"
   function_name    = "run_tests"
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
