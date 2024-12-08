@@ -50,7 +50,7 @@ resource "aws_iam_role_policy_attachment" "step_functions_policy_attach" {
   policy_arn = aws_iam_policy.step_functions_permissions.arn
 }
 
-# Create CodeDeploy Application and Deployment Group for Staging and Production
+# Create CodeDeploy Application and Deployment Groups for Staging and Production
 resource "aws_codedeploy_app" "app" {
   name = "my-serverless-app"
 }
