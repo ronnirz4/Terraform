@@ -75,7 +75,7 @@ resource "aws_lambda_function" "validate_code" {
   function_name    = "validate_code"
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("validate_code.zip")
 }
 
@@ -85,7 +85,7 @@ resource "aws_lambda_function" "run_tests" {
   function_name    = "run_tests"
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("RunTests.zip")
 }
 
