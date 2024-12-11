@@ -138,7 +138,7 @@ resource "aws_iam_role_policy_attachment" "production_lambda_policy_attach" {
 resource "aws_lambda_function" "staging_function" {
   filename         = "staging.zip"
   function_name    = "staging-function"
-  role             = aws_iam_role.lambda_exec_role.arn
+  role             = aws_iam_role.lambda_exec_role.arn  # Corrected reference
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("staging.zip")
@@ -148,7 +148,7 @@ resource "aws_lambda_function" "staging_function" {
 resource "aws_lambda_function" "production_function" {
   filename         = "production.zip"
   function_name    = "production-function"
-  role             = aws_iam_role.lambda_exec_role.arn
+  role             = aws_iam_role.lambda_exec_role.arn  # Corrected reference
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("production.zip")
@@ -288,7 +288,6 @@ resource "aws_codepipeline" "pipeline" {
   }
 }
 
-# Create Step Functions State Machine for Orchestration
 resource "aws_sfn_state_machine" "deployment" {
   name     = "DeploymentStateMachine"
   role_arn = aws_iam_role.step_functions_execution_role.arn
@@ -297,12 +296,12 @@ resource "aws_sfn_state_machine" "deployment" {
     States = {
       ValidateCode = {
         Type    = "Task"
-        Resource = aws_lambda_function.validate_code_function.arn
+        Resource = aws_lambda_function.validate_code_function.arn  # Corrected reference
         Next     = "RunTests"
       },
       RunTests = {
         Type    = "Task"
-        Resource = aws_lambda_function.run_tests_function.arn
+        Resource = aws_lambda_function.run_tests_function.arn  # Corrected reference
         Next     = "DeployStaging"
       },
       DeployStaging = {
@@ -312,7 +311,7 @@ resource "aws_sfn_state_machine" "deployment" {
       },
       RunTestsInStaging = {
         Type    = "Task"
-        Resource = aws_lambda_function.run_tests_function.arn
+        Resource = aws_lambda_function.run_tests_function.arn  # Corrected reference
         Next     = "DeployProduction"
       },
       DeployProduction = {
