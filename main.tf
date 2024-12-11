@@ -173,7 +173,6 @@ resource "aws_lambda_function" "run_tests_function" {
   source_code_hash = filebase64sha256("run_tests.zip")
 }
 
-# Create CodeBuild Project
 resource "aws_codebuild_project" "build" {
   name          = "serverless-app-build"
   description   = "Build Lambda functions for serverless app"
@@ -181,12 +180,12 @@ resource "aws_codebuild_project" "build" {
   service_role  = aws_iam_role.lambda_exec_role_main.arn
 
   source {
-    type      = "S3"
-    location  = "ronn4-production-bucket/production.zip"
+    type     = "S3"
+    location = "ronn4-production-bucket/production.zip"
   }
 
   artifacts {
-    type     = "NO_ARTIFACTS"
+    type = "NO_ARTIFACTS"
   }
 
   environment {
@@ -200,9 +199,6 @@ resource "aws_codebuild_project" "build" {
       status     = "ENABLED"
       group_name = "CodeBuildLogs"
       stream_name = "BuildStream"
-    }
-    s3_logs {
-      status = "DISABLED"
     }
   }
 }
