@@ -1,6 +1,6 @@
 # Create IAM Role for CodeDeploy Service
 resource "aws_iam_role" "codedeploy_service_role" {
-  name = "codedeploy_service_role"
+  name = "codedeploy-service-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -11,7 +11,6 @@ resource "aws_iam_role" "codedeploy_service_role" {
           Service = "codedeploy.amazonaws.com"
         }
         Effect    = "Allow"
-        Sid       = ""
       },
     ]
   })
@@ -38,7 +37,7 @@ resource "aws_codedeploy_deployment_group" "production_deployment" {
 
 # Attach necessary policies for CodeDeploy Service Role
 resource "aws_iam_policy" "codedeploy_policy" {
-  name        = "CodeDeployPermissions"
+  name        = "codedeploy-permissions"
   description = "Permissions for CodeDeploy to manage deployments"
 
   policy = jsonencode({
@@ -64,7 +63,7 @@ resource "aws_iam_role_policy_attachment" "codedeploy_policy_attach" {
 
 # Create IAM Role for Lambda Functions
 resource "aws_iam_role" "lambda_exec_role" {
-  name = "lambda_exec_role"
+  name = "lambda-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -75,45 +74,6 @@ resource "aws_iam_role" "lambda_exec_role" {
           Service = "lambda.amazonaws.com"
         }
         Effect    = "Allow"
-        Sid       = ""
-      },
-    ]
-  })
-}
-
-# Create IAM Role for Staging Lambda Function
-resource "aws_iam_role" "staging_lambda_exec_role" {
-  name = "staging_lambda_exec_role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action    = "sts:AssumeRole"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-        Effect    = "Allow"
-        Sid       = ""
-      },
-    ]
-  })
-}
-
-# Create IAM Role for Production Lambda Function
-resource "aws_iam_role" "production_lambda_exec_role" {
-  name = "production_lambda_exec_role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action    = "sts:AssumeRole"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-        Effect    = "Allow"
-        Sid       = ""
       },
     ]
   })
@@ -121,7 +81,7 @@ resource "aws_iam_role" "production_lambda_exec_role" {
 
 # Lambda Permissions Policy for Staging and Production Functions
 resource "aws_iam_policy" "staging_lambda_permissions" {
-  name        = "StagingLambdaPermissions"
+  name        = "staging-lambda-permissions"
   description = "Permissions for Staging Lambda function"
 
   policy = jsonencode({
@@ -142,7 +102,7 @@ resource "aws_iam_policy" "staging_lambda_permissions" {
 }
 
 resource "aws_iam_policy" "production_lambda_permissions" {
-  name        = "ProductionLambdaPermissions"
+  name        = "production-lambda-permissions"
   description = "Permissions for Production Lambda function"
 
   policy = jsonencode({
@@ -164,52 +124,52 @@ resource "aws_iam_policy" "production_lambda_permissions" {
 
 # Attach Staging Lambda Permissions Policy to Staging Lambda IAM Role
 resource "aws_iam_role_policy_attachment" "staging_lambda_policy_attach" {
-  role       = aws_iam_role.staging_lambda_exec_role.name
+  role       = aws_iam_role.lambda_exec_role.name
   policy_arn = aws_iam_policy.staging_lambda_permissions.arn
 }
 
 # Attach Production Lambda Permissions Policy to Production Lambda IAM Role
 resource "aws_iam_role_policy_attachment" "production_lambda_policy_attach" {
-  role       = aws_iam_role.production_lambda_exec_role.name
+  role       = aws_iam_role.lambda_exec_role.name
   policy_arn = aws_iam_policy.production_lambda_permissions.arn
 }
 
 # Create Staging Lambda Function
-resource "aws_lambda_function" "staging" {
+resource "aws_lambda_function" "staging_function" {
   filename         = "staging.zip"
-  function_name    = "staging"
-  role             = aws_iam_role.staging_lambda_exec_role.arn
+  function_name    = "staging-function"
+  role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("staging.zip")
 }
 
 # Create Production Lambda Function
-resource "aws_lambda_function" "production" {
+resource "aws_lambda_function" "production_function" {
   filename         = "production.zip"
-  function_name    = "production"
-  role             = aws_iam_role.production_lambda_exec_role.arn
+  function_name    = "production-function"
+  role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("production.zip")
 }
 
 # Create Lambda Functions for Validation and Running Tests
-resource "aws_lambda_function" "validate_code" {
+resource "aws_lambda_function" "validate_code_function" {
   filename         = "validate_code.zip"
-  function_name    = "validate_code"
+  function_name    = "validate-code-function"
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs18.x"  # Updated runtime
+  runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("validate_code.zip")
 }
 
-resource "aws_lambda_function" "run_tests" {
+resource "aws_lambda_function" "run_tests_function" {
   filename         = "run_tests.zip"
-  function_name    = "run_tests"
+  function_name    = "run-tests-function"
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs18.x"  # Updated runtime
+  runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("run_tests.zip")
 }
 
@@ -307,7 +267,7 @@ resource "aws_codepipeline" "pipeline" {
       provider         = "Lambda"
       input_artifacts  = ["BuildOutput"]
       configuration = {
-        FunctionName = aws_lambda_function.run_tests.function_name
+        FunctionName = aws_lambda_function.run_tests_function.function_name
       }
     }
   }
@@ -337,29 +297,29 @@ resource "aws_sfn_state_machine" "deployment" {
     States = {
       ValidateCode = {
         Type    = "Task"
-        Resource = aws_lambda_function.validate_code.arn
-        Next     = "DeployToStaging"
-      },
-      DeployToStaging = {
-        Type    = "Task"
-        Resource = aws_codedeploy_deployment_group.staging_deployment.arn
+        Resource = aws_lambda_function.validate_code_function.arn
         Next     = "RunTests"
       },
       RunTests = {
         Type    = "Task"
-        Resource = aws_lambda_function.run_tests.arn
-        Next     = "PromoteToProduction"
+        Resource = aws_lambda_function.run_tests_function.arn
+        Next     = "DeployStaging"
       },
-      PromoteToProduction = {
+      DeployStaging = {
+        Type    = "Task"
+        Resource = aws_codedeploy_deployment_group.staging_deployment.arn
+        Next     = "RunTestsInStaging"
+      },
+      RunTestsInStaging = {
+        Type    = "Task"
+        Resource = aws_lambda_function.run_tests_function.arn
+        Next     = "DeployProduction"
+      },
+      DeployProduction = {
         Type    = "Task"
         Resource = aws_codedeploy_deployment_group.production_deployment.arn
         End     = true
       }
     }
   })
-}
-
-# Output the State Machine ARN
-output "state_machine_arn" {
-  value = aws_sfn_state_machine.deployment.arn
 }
