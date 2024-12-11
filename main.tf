@@ -81,6 +81,119 @@ resource "aws_iam_role" "lambda_exec_role" {
   })
 }
 
+# Create IAM Role for Staging Lambda Function
+resource "aws_iam_role" "staging_lambda_exec_role" {
+  name = "staging_lambda_exec_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Effect    = "Allow"
+        Sid       = ""
+      },
+    ]
+  })
+}
+
+# Create IAM Role for Production Lambda Function
+resource "aws_iam_role" "production_lambda_exec_role" {
+  name = "production_lambda_exec_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Effect    = "Allow"
+        Sid       = ""
+      },
+    ]
+  })
+}
+
+# Lambda Permissions Policy for Staging and Production Functions
+resource "aws_iam_policy" "staging_lambda_permissions" {
+  name        = "StagingLambdaPermissions"
+  description = "Permissions for Staging Lambda function"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["s3:GetObject"]
+        Effect   = "Allow"
+        Resource = "arn:aws:s3:::your-bucket-name/*"  # Update with actual bucket
+      },
+      {
+        Action   = "iam:PassRole"
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "production_lambda_permissions" {
+  name        = "ProductionLambdaPermissions"
+  description = "Permissions for Production Lambda function"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["s3:GetObject"]
+        Effect   = "Allow"
+        Resource = "arn:aws:s3:::your-bucket-name/*"  # Update with actual bucket
+      },
+      {
+        Action   = "iam:PassRole"
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Attach Staging Lambda Permissions Policy to Staging Lambda IAM Role
+resource "aws_iam_role_policy_attachment" "staging_lambda_policy_attach" {
+  role       = aws_iam_role.staging_lambda_exec_role.name
+  policy_arn = aws_iam_policy.staging_lambda_permissions.arn
+}
+
+# Attach Production Lambda Permissions Policy to Production Lambda IAM Role
+resource "aws_iam_role_policy_attachment" "production_lambda_policy_attach" {
+  role       = aws_iam_role.production_lambda_exec_role.name
+  policy_arn = aws_iam_policy.production_lambda_permissions.arn
+}
+
+# Create Staging Lambda Function
+resource "aws_lambda_function" "staging" {
+  filename         = "staging.zip"
+  function_name    = "staging"
+  role             = aws_iam_role.staging_lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs18.x"
+  source_code_hash = filebase64sha256("staging.zip")
+}
+
+# Create Production Lambda Function
+resource "aws_lambda_function" "production" {
+  filename         = "production.zip"
+  function_name    = "production"
+  role             = aws_iam_role.production_lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs18.x"
+  source_code_hash = filebase64sha256("production.zip")
+}
+
 # Create Lambda Functions for Validation and Running Tests
 resource "aws_lambda_function" "validate_code" {
   filename         = "validate_code.zip"

@@ -88,6 +88,22 @@ resource "aws_lambda_function" "run_tests" {
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("RunTests.zip")
 }
+resource "aws_lambda_function" "staging" {
+  filename         = "staging.zip"
+  function_name    = "staging"
+  role             = aws_iam_role.staging_production_lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs18.x"
+  source_code_hash = filebase64sha256("staging.zip")
+}
+resource "aws_lambda_function" "production" {
+  filename         = "production.zip"
+  function_name    = "production"
+  role             = aws_iam_role.staging_production_lambda_exec_role.arn
+  handler          = "index.handler"
+  runtime          = "nodejs18.x"
+  source_code_hash = filebase64sha256("production.zip")
+}
 
 # Step Functions Permissions Policy (referencing Lambda functions now)
 resource "aws_iam_policy" "step_functions_permissions" {
