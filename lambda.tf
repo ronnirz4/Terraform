@@ -18,8 +18,8 @@ resource "aws_iam_role" "step_functions_execution_role" {
 }
 
 # Create Lambda Execution Role
-resource "aws_iam_role" "lambda_exec_role" {
-  name = "lambda_exec_role"
+resource "aws_iam_role" "lambda_exec_role_lambda" {
+  name = "lambda_exec_role_lambda"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -65,7 +65,7 @@ resource "aws_iam_policy" "lambda_permissions" {
 
 # Attach Lambda Permissions Policy to Lambda IAM Role
 resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
-  role       = aws_iam_role.lambda_exec_role.name
+  role       = aws_iam_role.lambda_exec_role_lambda.name
   policy_arn = aws_iam_policy.lambda_permissions.arn
 }
 
@@ -73,7 +73,7 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
 resource "aws_lambda_function" "validate_code" {
   filename         = "validate_code.zip"
   function_name    = "validate_code"
-  role             = aws_iam_role.lambda_exec_role.arn
+  role             = aws_iam_role.lambda_exec_role_lambda.arn
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("validate_code.zip")
@@ -83,7 +83,7 @@ resource "aws_lambda_function" "validate_code" {
 resource "aws_lambda_function" "run_tests" {
   filename         = "RunTests.zip"
   function_name    = "run_tests"
-  role             = aws_iam_role.lambda_exec_role.arn
+  role             = aws_iam_role.lambda_exec_role_lambda.arn
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("RunTests.zip")
@@ -91,7 +91,7 @@ resource "aws_lambda_function" "run_tests" {
 resource "aws_lambda_function" "staging" {
   filename         = "staging.zip"
   function_name    = "staging"
-  role             = aws_iam_role.lambda_exec_role.arn
+  role             = aws_iam_role.lambda_exec_role_lambda.arn
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("staging.zip")
@@ -99,7 +99,7 @@ resource "aws_lambda_function" "staging" {
 resource "aws_lambda_function" "production" {
   filename         = "production.zip"
   function_name    = "production"
-  role             = aws_iam_role.lambda_exec_role.arn
+  role             = aws_iam_role.lambda_exec_role_lambda.arn
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("production.zip")

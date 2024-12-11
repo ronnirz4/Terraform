@@ -62,8 +62,8 @@ resource "aws_iam_role_policy_attachment" "codedeploy_policy_attach" {
 }
 
 # Create IAM Role for Lambda Functions
-resource "aws_iam_role" "lambda_exec_role" {
-  name = "lambda-execution-role"
+resource "aws_iam_role" "lambda_exec_role_main" {
+  name = "lambda-execution-role_main"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -124,13 +124,13 @@ resource "aws_iam_policy" "production_lambda_permissions" {
 
 # Attach Staging Lambda Permissions Policy to Staging Lambda IAM Role
 resource "aws_iam_role_policy_attachment" "staging_lambda_policy_attach" {
-  role       = aws_iam_role.lambda_exec_role.name
+  role       = aws_iam_role.lambda_exec_role_main.name
   policy_arn = aws_iam_policy.staging_lambda_permissions.arn
 }
 
 # Attach Production Lambda Permissions Policy to Production Lambda IAM Role
 resource "aws_iam_role_policy_attachment" "production_lambda_policy_attach" {
-  role       = aws_iam_role.lambda_exec_role.name
+  role       = aws_iam_role.lambda_exec_role_main.name
   policy_arn = aws_iam_policy.production_lambda_permissions.arn
 }
 
@@ -138,7 +138,7 @@ resource "aws_iam_role_policy_attachment" "production_lambda_policy_attach" {
 resource "aws_lambda_function" "staging_function" {
   filename         = "staging.zip"
   function_name    = "staging-function"
-  role             = aws_iam_role.lambda_exec_role.arn  # Corrected reference
+  role             = aws_iam_role.lambda_exec_role_main.arn  # Corrected reference
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("staging.zip")
@@ -148,7 +148,7 @@ resource "aws_lambda_function" "staging_function" {
 resource "aws_lambda_function" "production_function" {
   filename         = "production.zip"
   function_name    = "production-function"
-  role             = aws_iam_role.lambda_exec_role.arn  # Corrected reference
+  role             = aws_iam_role.lambda_exec_role_main.arn  # Corrected reference
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("production.zip")
@@ -158,7 +158,7 @@ resource "aws_lambda_function" "production_function" {
 resource "aws_lambda_function" "validate_code_function" {
   filename         = "validate_code.zip"
   function_name    = "validate-code-function"
-  role             = aws_iam_role.lambda_exec_role.arn
+  role             = aws_iam_role.lambda_exec_role_main.arn
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("validate_code.zip")
@@ -167,7 +167,7 @@ resource "aws_lambda_function" "validate_code_function" {
 resource "aws_lambda_function" "run_tests_function" {
   filename         = "run_tests.zip"
   function_name    = "run-tests-function"
-  role             = aws_iam_role.lambda_exec_role.arn
+  role             = aws_iam_role.lambda_exec_role_main.arn
   handler          = "index.handler"
   runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("run_tests.zip")
@@ -178,7 +178,7 @@ resource "aws_codebuild_project" "build" {
   name          = "serverless-app-build"
   description   = "Build Lambda functions for serverless app"
   build_timeout = "30"
-  service_role  = aws_iam_role.lambda_exec_role.arn
+  service_role  = aws_iam_role.lambda_exec_role_main.arn
 
   source {
     type      = "S3"
