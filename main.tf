@@ -182,7 +182,7 @@ resource "aws_codebuild_project" "build" {
 
   source {
     type      = "S3"
-    location  = "your-s3-bucket-name/your-code.zip"
+    location  = "ronn4-production-bucket/production.zip"
   }
 
   artifacts {
@@ -196,9 +196,13 @@ resource "aws_codebuild_project" "build" {
   }
 
   logs_config {
-    cloudwatch {
-      group_name  = "CodeBuildLogs"
+    cloudwatch_logs {
+      status     = "ENABLED"
+      group_name = "CodeBuildLogs"
       stream_name = "BuildStream"
+    }
+    s3_logs {
+      status = "DISABLED"
     }
   }
 }
