@@ -148,7 +148,6 @@ resource "aws_iam_role_policy_attachment" "production_lambda_policy_attach" {
 # Create CodeBuild Project
 resource "aws_codebuild_project" "build" {
   provider = aws
-  required_version = ">= 3.0"
 
   name          = "serverless-app-build"
   description   = "Build Lambda functions for serverless app"
@@ -183,7 +182,6 @@ resource "aws_codebuild_project" "build" {
 # Create CodePipeline
 resource "aws_codepipeline" "pipeline" {
   provider = aws
-  required_version = ">= 3.0"
 
   name     = "serverless-app-pipeline"
   role_arn = aws_iam_role.codedeploy_service_role.arn
