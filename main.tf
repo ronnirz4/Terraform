@@ -15,6 +15,60 @@ resource "aws_s3_bucket" "production_bucket" {
   bucket = "ronn4-production-bucket-unique"
 }
 
+# S3 Bucket Policy for Artifact Bucket
+resource "aws_s3_bucket_object" "artifact_bucket_policy" {
+  bucket = aws_s3_bucket.artifact_bucket.bucket
+  key    = "artifact-bucket-policy.json"
+  acl    = "private"
+  content = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "s3:GetObject"
+        Effect   = "Allow"
+        Resource = "arn:aws:s3:::ronn4-artifact-bucket/*"
+        Principal = "*"
+      }
+    ]
+  })
+}
+
+# S3 Bucket Policy for Staging Bucket
+resource "aws_s3_bucket_object" "staging_bucket_policy" {
+  bucket = aws_s3_bucket.staging_bucket.bucket
+  key    = "staging-bucket-policy.json"
+  acl    = "private"
+  content = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "s3:GetObject"
+        Effect   = "Allow"
+        Resource = "arn:aws:s3:::ronn4-staging-bucket-unique/*"
+        Principal = "*"
+      }
+    ]
+  })
+}
+
+# S3 Bucket Policy for Production Bucket
+resource "aws_s3_bucket_object" "production_bucket_policy" {
+  bucket = aws_s3_bucket.production_bucket.bucket
+  key    = "production-bucket-policy.json"
+  acl    = "private"
+  content = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "s3:GetObject"
+        Effect   = "Allow"
+        Resource = "arn:aws:s3:::ronn4-production-bucket-unique/*"
+        Principal = "*"
+      }
+    ]
+  })
+}
+
 # Create IAM Role for CodeDeploy Service
 resource "aws_iam_role" "codedeploy_service_role" {
   name = "codedeploy-service-role"
@@ -281,7 +335,8 @@ resource "aws_iam_policy" "codepipeline_s3_access" {
         Effect   = "Allow"
         Resource = [
           "arn:aws:s3:::ronn4-staging-bucket-unique/*",  # Source bucket
-          "arn:aws:s3:::ronn4-artifact-bucket/*"  # Artifact bucket
+          "arn:aws:s3:::ronn4-artifact-bucket/*",  # Artifact bucket
+          "arn:aws:s3:::ronn4-staging-bucket-unique/staging.zip"
         ]
       }
     ]
