@@ -3,27 +3,12 @@ resource "aws_s3_bucket" "artifact_bucket" {
   bucket = "ronn4-artifact-bucket"
 }
 
-resource "aws_s3_bucket_acl" "artifact_bucket_acl" {
-  bucket = aws_s3_bucket.artifact_bucket.bucket
-  acl    = "private"
-}
-
 resource "aws_s3_bucket" "staging_bucket" {
   bucket = "ronn4-staging-bucket"
 }
 
-resource "aws_s3_bucket_acl" "staging_bucket_acl" {
-  bucket = aws_s3_bucket.staging_bucket.bucket
-  acl    = "private"
-}
-
 resource "aws_s3_bucket" "production_bucket" {
   bucket = "ronn4-production-bucket"
-}
-
-resource "aws_s3_bucket_acl" "production_bucket_acl" {
-  bucket = aws_s3_bucket.production_bucket.bucket
-  acl    = "private"
 }
 
 # Create IAM Role for CodeDeploy Service
@@ -65,7 +50,6 @@ resource "aws_codedeploy_deployment_group" "production_deployment" {
 
 # Attach necessary policies for CodeDeploy Service Role
 resource "aws_iam_policy" "codedeploy_policy" {
-  version     = "2012-10-17" # Required version property added
   name        = "codedeploy-permissions"
   description = "Permissions for CodeDeploy to manage deployments"
 
@@ -92,7 +76,6 @@ resource "aws_iam_role_policy_attachment" "codedeploy_policy_attach" {
 
 # Create IAM Role for Lambda Functions
 resource "aws_iam_role" "lambda_exec_role_main" {
-  version = "2012-10-17" # Required version property added
   name = "lambda-execution-role_main"
 
   assume_role_policy = jsonencode({
@@ -111,7 +94,6 @@ resource "aws_iam_role" "lambda_exec_role_main" {
 
 # Lambda Permissions Policy for Staging and Production Functions
 resource "aws_iam_policy" "staging_lambda_permissions" {
-  version     = "2012-10-17" # Required version property added
   name        = "staging-lambda-permissions"
   description = "Permissions for Staging Lambda function"
 
@@ -133,7 +115,6 @@ resource "aws_iam_policy" "staging_lambda_permissions" {
 }
 
 resource "aws_iam_policy" "production_lambda_permissions" {
-  version     = "2012-10-17" # Required version property added
   name        = "production-lambda-permissions"
   description = "Permissions for Production Lambda function"
 
@@ -239,9 +220,9 @@ resource "aws_codepipeline" "pipeline" {
   }
 
   stage {
-    name = "Deploy"
+    name = "DeployStaging"
     action {
-      name             = "DeployStaging"
+      name             = "DeployStagingAction"
       category         = "Deploy"
       owner            = "AWS"
       provider         = "CodeDeploy"
@@ -256,7 +237,7 @@ resource "aws_codepipeline" "pipeline" {
   stage {
     name = "DeployProduction"
     action {
-      name             = "DeployProduction"
+      name             = "DeployProductionAction"
       category         = "Deploy"
       owner            = "AWS"
       provider         = "CodeDeploy"
