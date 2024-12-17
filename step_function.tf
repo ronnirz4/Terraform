@@ -6,12 +6,12 @@ resource "aws_sfn_state_machine" "deployment" {
     States = {
       ValidateCode = {
         Type    = "Task"
-        Resource = aws_lambda_function.validate_code_function.arn  # Corrected reference
+        Resource = aws_lambda_function.validate_code.arn  # Corrected reference
         Next     = "RunTests"
       },
       RunTests = {
         Type    = "Task"
-        Resource = aws_lambda_function.run_tests_function.arn  # Corrected reference
+        Resource = aws_lambda_function.run_tests.arn  # Corrected reference
         Next     = "DeployStaging"
       },
       DeployStaging = {
@@ -21,7 +21,7 @@ resource "aws_sfn_state_machine" "deployment" {
       },
       RunTestsInStaging = {
         Type    = "Task"
-        Resource = aws_lambda_function.run_tests_function.arn  # Corrected reference
+        Resource = aws_lambda_function.run_tests.arn  # Corrected reference
         Next     = "DeployProduction"
       },
       DeployProduction = {
