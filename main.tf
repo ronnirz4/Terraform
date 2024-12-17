@@ -1,17 +1,14 @@
 # S3 Buckets for Artifact, Staging, and Production
 resource "aws_s3_bucket" "artifact_bucket" {
   bucket = "ronn4-artifact-bucket"
-  acl    = "private"
 }
 
 resource "aws_s3_bucket" "staging_bucket" {
   bucket = "ronn4-staging-bucket"
-  acl    = "private"
 }
 
 resource "aws_s3_bucket" "production_bucket" {
   bucket = "ronn4-production-bucket"
-  acl    = "private"
 }
 
 # Create IAM Role for CodeDeploy Service
