@@ -5,6 +5,10 @@ resource "aws_s3_bucket" "artifact_bucket" {
 
 resource "aws_s3_bucket" "staging_bucket" {
   bucket = "ronn4-staging-bucket-unique"
+
+  versioning {
+    enabled = true
+  }
 }
 
 resource "aws_s3_bucket" "production_bucket" {
@@ -360,7 +364,7 @@ resource "aws_codepipeline" "pipeline" {
       output_artifacts = ["SourceOutput"]
       configuration = {
         S3Bucket    = "ronn4-staging-bucket"
-        S3ObjectKey = "staging.zip"
+        S3ObjectKey = "your-source-code.zip"
       }
       version = "1"
     }
