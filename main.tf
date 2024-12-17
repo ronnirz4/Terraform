@@ -264,18 +264,21 @@ resource "aws_iam_role_policy_attachment" "codepipeline_assume_codedeploy_role_a
   policy_arn = aws_iam_policy.codepipeline_assume_codedeploy_role.arn
 }
 
-# Create IAM policy for CodePipeline to access S3
+# S3 Permissions for CodePipeline Role (Read and Write)
 resource "aws_iam_policy" "codepipeline_s3_access" {
   name        = "codepipeline-s3-access"
-  description = "Permissions for CodePipeline to access the source bucket"
+  description = "Permissions for CodePipeline to access the source and artifact buckets"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = ["s3:GetObject"]
+        Action   = ["s3:GetObject", "s3:PutObject"]
         Effect   = "Allow"
-        Resource = "arn:aws:s3:::ronn4-staging-bucket/*"
+        Resource = [
+          "arn:aws:s3:::ronn4-staging-bucket/*",  # Source bucket
+          "arn:aws:s3:::ronn4-artifact-bucket/*"  # Artifact bucket
+        ]
       }
     ]
   })
@@ -286,7 +289,58 @@ resource "aws_iam_role_policy_attachment" "codepipeline_s3_access_attach" {
   policy_arn = aws_iam_policy.codepipeline_s3_access.arn
 }
 
-# Attach the CodePipeline service role to the pipeline
+# CodeBuild Permissions for CodePipeline Role
+resource "aws_iam_policy" "codepipeline_codebuild_access" {
+  name        = "codepipeline-codebuild-access"
+  description = "Permissions for CodePipeline to interact with CodeBuild"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = [
+          "codebuild:BatchGetBuilds",
+          "codebuild:StartBuild"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "codepipeline_codebuild_access_attach" {
+  role       = aws_iam_role.codepipeline_service_role.name
+  policy_arn = aws_iam_policy.codepipeline_codebuild_access.arn
+}
+
+# CodeDeploy Permissions for CodePipeline Role
+resource "aws_iam_policy" "codepipeline_codedeploy_access" {
+  name        = "codepipeline-codedeploy-access"
+  description = "Permissions for CodePipeline to interact with CodeDeploy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:RegisterApplicationRevision"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "codepipeline_codedeploy_access_attach" {
+  role       = aws_iam_role.codepipeline_service_role.name
+  policy_arn = aws_iam_policy.codepipeline_codedeploy_access.arn
+}
+
+# Create CodePipeline
 resource "aws_codepipeline" "pipeline" {
   name     = "serverless-app-pipeline"
   role_arn = aws_iam_role.codepipeline_service_role.arn  # Updated to use the new CodePipeline service role
