@@ -107,7 +107,7 @@ resource "aws_iam_policy" "staging_lambda_permissions" {
       {
         Action   = ["s3:GetObject"]
         Effect   = "Allow"
-        Resource = "arn:aws:s3:::ronn4-staging-bucket/*"
+        Resource = "arn:aws:s3:::ronn4-staging-bucket-unique/*"
       },
       {
         Action   = "iam:PassRole"
@@ -280,7 +280,7 @@ resource "aws_iam_policy" "codepipeline_s3_access" {
         Action   = ["s3:GetObject", "s3:PutObject"]
         Effect   = "Allow"
         Resource = [
-          "arn:aws:s3:::ronn4-staging-bucket/*",  # Source bucket
+          "arn:aws:s3:::ronn4-staging-bucket-unique/*",  # Source bucket
           "arn:aws:s3:::ronn4-artifact-bucket/*"  # Artifact bucket
         ]
       }
