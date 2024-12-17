@@ -4,11 +4,11 @@ resource "aws_s3_bucket" "artifact_bucket" {
 }
 
 resource "aws_s3_bucket" "staging_bucket" {
-  bucket = "ronn4-staging-bucket"
+  bucket = "ronn4-staging-bucket-unique"
 }
 
 resource "aws_s3_bucket" "production_bucket" {
-  bucket = "ronn4-production-bucket"
+  bucket = "ronn4-production-bucket-unique"
 }
 
 # Create IAM Role for CodeDeploy Service
@@ -163,7 +163,7 @@ resource "aws_codebuild_project" "build" {
   }
 
   environment {
-    compute_type = "BUILD_GENERAL1_SMALL"
+    compute_type = "BUILD_GENERAL1_LARGE"
     image        = "aws/codebuild/nodejs:18.x"
     type         = "LINUX_CONTAINER"
   }
