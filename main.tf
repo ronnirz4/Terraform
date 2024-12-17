@@ -264,6 +264,28 @@ resource "aws_iam_role_policy_attachment" "codepipeline_assume_codedeploy_role_a
   policy_arn = aws_iam_policy.codepipeline_assume_codedeploy_role.arn
 }
 
+# Create IAM policy for CodePipeline to access S3
+resource "aws_iam_policy" "codepipeline_s3_access" {
+  name        = "codepipeline-s3-access"
+  description = "Permissions for CodePipeline to access the source bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["s3:GetObject"]
+        Effect   = "Allow"
+        Resource = "arn:aws:s3:::ronn4-staging-bucket/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "codepipeline_s3_access_attach" {
+  role       = aws_iam_role.codepipeline_service_role.name
+  policy_arn = aws_iam_policy.codepipeline_s3_access.arn
+}
+
 # Attach the CodePipeline service role to the pipeline
 resource "aws_codepipeline" "pipeline" {
   name     = "serverless-app-pipeline"
@@ -338,4 +360,3 @@ resource "aws_codepipeline" "pipeline" {
     }
   }
 }
-
