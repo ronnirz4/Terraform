@@ -164,7 +164,7 @@ resource "aws_codebuild_project" "build" {
 
   environment {
     compute_type = "BUILD_GENERAL1_LARGE"
-    image        = "aws/codebuild/nodejs:14.x"
+    image        = "aws/codebuild/standard:5.0"
     type         = "LINUX_CONTAINER"
   }
 
