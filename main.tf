@@ -257,7 +257,7 @@ resource "aws_codebuild_project" "build" {
 
   source {
     type     = "S3"
-    location = "ronn4-staging-bucket/source.zip"
+    location = "ronn4-staging-bucket/staging.zip"
   }
 
   artifacts {
