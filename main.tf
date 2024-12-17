@@ -363,7 +363,7 @@ resource "aws_codepipeline" "pipeline" {
       provider         = "S3"
       output_artifacts = ["SourceOutput"]
       configuration = {
-        S3Bucket    = "ronn4-staging-bucket"
+        S3Bucket    = "ronn4-staging-bucket-unique"  # Use versioned bucket
         S3ObjectKey = "staging.zip"
       }
       version = "1"
