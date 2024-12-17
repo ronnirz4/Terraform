@@ -47,12 +47,12 @@ resource "aws_iam_policy" "lambda_permissions" {
       {
         Action   = ["s3:GetObject"]
         Effect   = "Allow"
-        Resource = "arn:aws:s3:::your-bucket-name/*"
+        Resource = "arn:aws:s3:::ronn4-staging-bucket-unique/*"
       },
       {
         Action   = ["codepipeline:PutJobSuccessResult"]
         Effect   = "Allow"
-        Resource = "arn:aws:codepipeline:us-east-2:123456789012:your-pipeline-name"
+        Resource = "arn:aws:codepipeline:us-east-2:023196572641:serverless-app-pipeline"
       },
       {
         Action   = "iam:PassRole"

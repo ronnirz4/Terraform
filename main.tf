@@ -24,7 +24,7 @@ resource "aws_s3_bucket_object" "artifact_bucket_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = "s3:GetObject"
+        Action   = "s3:*"
         Effect   = "Allow"
         Resource = "arn:aws:s3:::ronn4-artifact-bucket/*"
         Principal = "*"
@@ -42,7 +42,7 @@ resource "aws_s3_bucket_object" "staging_bucket_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = "s3:GetObject"
+        Action   = "s3:*"
         Effect   = "Allow"
         Resource = "arn:aws:s3:::ronn4-staging-bucket-unique/*"
         Principal = "*"
@@ -60,7 +60,7 @@ resource "aws_s3_bucket_object" "production_bucket_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = "s3:GetObject"
+        Action   = "s3:*"
         Effect   = "Allow"
         Resource = "arn:aws:s3:::ronn4-production-bucket-unique/*"
         Principal = "*"
@@ -69,7 +69,7 @@ resource "aws_s3_bucket_object" "production_bucket_policy" {
   })
 }
 
-# Create IAM Role for CodeDeploy Service
+# Create IAM Role for CodeDeploy Service with Full Access
 resource "aws_iam_role" "codedeploy_service_role" {
   name = "codedeploy-service-role"
 
@@ -85,6 +85,28 @@ resource "aws_iam_role" "codedeploy_service_role" {
       },
     ]
   })
+}
+
+# Attach full access policy to CodeDeploy role
+resource "aws_iam_policy" "codedeploy_full_access" {
+  name        = "codedeploy-full-access"
+  description = "Full access for CodeDeploy to manage all resources"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "*"
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "codedeploy_full_access_attach" {
+  role       = aws_iam_role.codedeploy_service_role.name
+  policy_arn = aws_iam_policy.codedeploy_full_access.arn
 }
 
 # Create CodeDeploy Application and Deployment Groups for Staging and Production
@@ -106,33 +128,7 @@ resource "aws_codedeploy_deployment_group" "production_deployment" {
   deployment_config_name = "CodeDeployDefault.OneAtATime"
 }
 
-# Attach necessary policies for CodeDeploy Service Role
-resource "aws_iam_policy" "codedeploy_policy" {
-  name        = "codedeploy-permissions"
-  description = "Permissions for CodeDeploy to manage deployments"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = ["codedeploy:CreateDeployment", "codedeploy:GetDeployment"]
-        Effect   = "Allow"
-        Resource = [
-          aws_codedeploy_app.app.arn,
-          aws_codedeploy_deployment_group.staging_deployment.arn,
-          aws_codedeploy_deployment_group.production_deployment.arn
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "codedeploy_policy_attach" {
-  role       = aws_iam_role.codedeploy_service_role.name
-  policy_arn = aws_iam_policy.codedeploy_policy.arn
-}
-
-# Create IAM Role for Lambda Functions
+# IAM Role for Lambda Functions with Full Access
 resource "aws_iam_role" "lambda_exec_role_main" {
   name = "lambda-execution-role_main"
 
@@ -150,21 +146,16 @@ resource "aws_iam_role" "lambda_exec_role_main" {
   })
 }
 
-# Lambda Permissions Policy for Staging and Production Functions
-resource "aws_iam_policy" "staging_lambda_permissions" {
-  name        = "staging-lambda-permissions"
-  description = "Permissions for Staging Lambda function"
+# Attach full access policy to Lambda execution role
+resource "aws_iam_policy" "lambda_full_access" {
+  name        = "lambda-full-access"
+  description = "Full access for Lambda to manage all resources"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = ["s3:GetObject"]
-        Effect   = "Allow"
-        Resource = "arn:aws:s3:::ronn4-staging-bucket-unique/*"
-      },
-      {
-        Action   = "iam:PassRole"
+        Action   = "*"
         Effect   = "Allow"
         Resource = "*"
       }
@@ -172,38 +163,12 @@ resource "aws_iam_policy" "staging_lambda_permissions" {
   })
 }
 
-resource "aws_iam_policy" "production_lambda_permissions" {
-  name        = "production-lambda-permissions"
-  description = "Permissions for Production Lambda function"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = ["s3:GetObject"]
-        Effect   = "Allow"
-        Resource = "arn:aws:s3:::ronn4-production-bucket/*"
-      },
-      {
-        Action   = "iam:PassRole"
-        Effect   = "Allow"
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "staging_lambda_policy_attach" {
+resource "aws_iam_role_policy_attachment" "lambda_full_access_attach" {
   role       = aws_iam_role.lambda_exec_role_main.name
-  policy_arn = aws_iam_policy.staging_lambda_permissions.arn
+  policy_arn = aws_iam_policy.lambda_full_access.arn
 }
 
-resource "aws_iam_role_policy_attachment" "production_lambda_policy_attach" {
-  role       = aws_iam_role.lambda_exec_role_main.name
-  policy_arn = aws_iam_policy.production_lambda_permissions.arn
-}
-
-# Create CodeBuild Service Role
+# IAM Role for CodeBuild with Full Access
 resource "aws_iam_role" "codebuild_service_role" {
   name = "codebuild-service-role"
 
@@ -221,21 +186,16 @@ resource "aws_iam_role" "codebuild_service_role" {
   })
 }
 
-# CodeBuild Policy for Permissions
-resource "aws_iam_policy" "codebuild_policy" {
-  name        = "codebuild-policy"
-  description = "Permissions for CodeBuild to access required resources"
+# Attach full access policy to CodeBuild role
+resource "aws_iam_policy" "codebuild_full_access" {
+  name        = "codebuild-full-access"
+  description = "Full access for CodeBuild to manage all resources"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = ["s3:GetObject", "s3:PutObject"]
-        Effect   = "Allow"
-        Resource = "arn:aws:s3:::ronn4-artifact-bucket/*"
-      },
-      {
-        Action   = ["sts:AssumeRole"]
+        Action   = "*"
         Effect   = "Allow"
         Resource = "*"
       }
@@ -243,45 +203,12 @@ resource "aws_iam_policy" "codebuild_policy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "codebuild_policy_attach" {
+resource "aws_iam_role_policy_attachment" "codebuild_full_access_attach" {
   role       = aws_iam_role.codebuild_service_role.name
-  policy_arn = aws_iam_policy.codebuild_policy.arn
+  policy_arn = aws_iam_policy.codebuild_full_access.arn
 }
 
-# Create CodeBuild Project
-resource "aws_codebuild_project" "build" {
-  name          = "serverless-app-build"
-  description   = "Build Lambda functions for serverless app"
-  build_timeout = "30"
-  service_role  = aws_iam_role.codebuild_service_role.arn  # Use the new service role
-
-  source {
-    type     = "S3"
-    location = "ronn4-staging-bucket-unique/staging.zip"
-  }
-
-  artifacts {
-    type     = "S3"
-    location = "ronn4-artifact-bucket"
-  }
-
-  environment {
-    compute_type = "BUILD_GENERAL1_LARGE"
-    image        = "aws/codebuild/standard:5.0"
-    type         = "LINUX_CONTAINER"
-  }
-
-  logs_config {
-    cloudwatch_logs {
-      status     = "ENABLED"
-      group_name = "CodeBuildLogs"
-      stream_name = "BuildStream"
-    }
-  }
-}
-
-# Create CodePipeline
-# Create IAM Role for CodePipeline
+# IAM Role for CodePipeline with Full Access
 resource "aws_iam_role" "codepipeline_service_role" {
   name = "codepipeline-service-role"
 
@@ -299,68 +226,16 @@ resource "aws_iam_role" "codepipeline_service_role" {
   })
 }
 
-# Create a policy that allows CodePipeline to assume the CodeDeploy role
-resource "aws_iam_policy" "codepipeline_assume_codedeploy_role" {
-  name        = "codepipeline-assume-codedeploy-role"
-  description = "Policy to allow CodePipeline to assume CodeDeploy service role"
+# Attach full access policy to CodePipeline role
+resource "aws_iam_policy" "codepipeline_full_access" {
+  name        = "codepipeline-full-access"
+  description = "Full access for CodePipeline to manage all resources"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = "sts:AssumeRole"
-        Effect   = "Allow"
-        Resource = aws_iam_role.codedeploy_service_role.arn
-      }
-    ]
-  })
-}
-
-# Attach the policy to the CodePipeline service role
-resource "aws_iam_role_policy_attachment" "codepipeline_assume_codedeploy_role_attach" {
-  role       = aws_iam_role.codepipeline_service_role.name
-  policy_arn = aws_iam_policy.codepipeline_assume_codedeploy_role.arn
-}
-
-# S3 Permissions for CodePipeline Role (Read and Write)
-resource "aws_iam_policy" "codepipeline_s3_access" {
-  name        = "codepipeline-s3-access"
-  description = "Permissions for CodePipeline to access the source and artifact buckets"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = ["s3:GetObject", "s3:PutObject"]
-        Effect   = "Allow"
-        Resource = [
-          "arn:aws:s3:::ronn4-staging-bucket-unique/*",  # Source bucket
-          "arn:aws:s3:::ronn4-artifact-bucket/*",  # Artifact bucket
-          "arn:aws:s3:::ronn4-staging-bucket-unique/staging.zip"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "codepipeline_s3_access_attach" {
-  role       = aws_iam_role.codepipeline_service_role.name
-  policy_arn = aws_iam_policy.codepipeline_s3_access.arn
-}
-
-# CodeBuild Permissions for CodePipeline Role
-resource "aws_iam_policy" "codepipeline_codebuild_access" {
-  name        = "codepipeline-codebuild-access"
-  description = "Permissions for CodePipeline to interact with CodeBuild"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = [
-          "codebuild:BatchGetBuilds",
-          "codebuild:StartBuild"
-        ]
+        Action   = "*"
         Effect   = "Allow"
         Resource = "*"
       }
@@ -368,41 +243,15 @@ resource "aws_iam_policy" "codepipeline_codebuild_access" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "codepipeline_codebuild_access_attach" {
+resource "aws_iam_role_policy_attachment" "codepipeline_full_access_attach" {
   role       = aws_iam_role.codepipeline_service_role.name
-  policy_arn = aws_iam_policy.codepipeline_codebuild_access.arn
-}
-
-# CodeDeploy Permissions for CodePipeline Role
-resource "aws_iam_policy" "codepipeline_codedeploy_access" {
-  name        = "codepipeline-codedeploy-access"
-  description = "Permissions for CodePipeline to interact with CodeDeploy"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = [
-          "codedeploy:CreateDeployment",
-          "codedeploy:GetDeployment",
-          "codedeploy:RegisterApplicationRevision"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "codepipeline_codedeploy_access_attach" {
-  role       = aws_iam_role.codepipeline_service_role.name
-  policy_arn = aws_iam_policy.codepipeline_codedeploy_access.arn
+  policy_arn = aws_iam_policy.codepipeline_full_access.arn
 }
 
 # Create CodePipeline
 resource "aws_codepipeline" "pipeline" {
   name     = "serverless-app-pipeline"
-  role_arn = aws_iam_role.codepipeline_service_role.arn  # Updated to use the new CodePipeline service role
+  role_arn = aws_iam_role.codepipeline_service_role.arn
 
   artifact_store {
     type     = "S3"
@@ -418,7 +267,7 @@ resource "aws_codepipeline" "pipeline" {
       provider         = "S3"
       output_artifacts = ["SourceOutput"]
       configuration = {
-        S3Bucket    = "ronn4-staging-bucket-unique"  # Use versioned bucket
+        S3Bucket    = "ronn4-staging-bucket-unique"
         S3ObjectKey = "staging.zip"
       }
       version = "1"
