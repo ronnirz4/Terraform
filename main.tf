@@ -90,7 +90,7 @@ resource "aws_iam_policy" "staging_lambda_permissions" {
       {
         Action   = ["s3:GetObject"]
         Effect   = "Allow"
-        Resource = "arn:aws:s3:::your-bucket-name/*"  # Update with actual bucket
+        Resource = "arn:aws:s3:::your-bucket-name/*"
       },
       {
         Action   = "iam:PassRole"
@@ -111,7 +111,7 @@ resource "aws_iam_policy" "production_lambda_permissions" {
       {
         Action   = ["s3:GetObject"]
         Effect   = "Allow"
-        Resource = "arn:aws:s3:::your-bucket-name/*"  # Update with actual bucket
+        Resource = "arn:aws:s3:::your-bucket-name/*"
       },
       {
         Action   = "iam:PassRole"
@@ -122,57 +122,17 @@ resource "aws_iam_policy" "production_lambda_permissions" {
   })
 }
 
-# Attach Staging Lambda Permissions Policy to Staging Lambda IAM Role
 resource "aws_iam_role_policy_attachment" "staging_lambda_policy_attach" {
   role       = aws_iam_role.lambda_exec_role_main.name
   policy_arn = aws_iam_policy.staging_lambda_permissions.arn
 }
 
-# Attach Production Lambda Permissions Policy to Production Lambda IAM Role
 resource "aws_iam_role_policy_attachment" "production_lambda_policy_attach" {
   role       = aws_iam_role.lambda_exec_role_main.name
   policy_arn = aws_iam_policy.production_lambda_permissions.arn
 }
 
-# Create Staging Lambda Function
-resource "aws_lambda_function" "staging_function" {
-  filename         = "staging.zip"
-  function_name    = "staging-function"
-  role             = aws_iam_role.lambda_exec_role_main.arn  # Corrected reference
-  handler          = "index.handler"
-  runtime          = "nodejs18.x"
-  source_code_hash = filebase64sha256("staging.zip")
-}
-
-# Create Production Lambda Function
-resource "aws_lambda_function" "production_function" {
-  filename         = "production.zip"
-  function_name    = "production-function"
-  role             = aws_iam_role.lambda_exec_role_main.arn  # Corrected reference
-  handler          = "index.handler"
-  runtime          = "nodejs18.x"
-  source_code_hash = filebase64sha256("production.zip")
-}
-
-# Create Lambda Functions for Validation and Running Tests
-resource "aws_lambda_function" "validate_code_function" {
-  filename         = "validate_code.zip"
-  function_name    = "validate-code-function"
-  role             = aws_iam_role.lambda_exec_role_main.arn
-  handler          = "index.handler"
-  runtime          = "nodejs18.x"
-  source_code_hash = filebase64sha256("validate_code.zip")
-}
-
-resource "aws_lambda_function" "run_tests_function" {
-  filename         = "run_tests.zip"
-  function_name    = "run-tests-function"
-  role             = aws_iam_role.lambda_exec_role_main.arn
-  handler          = "index.handler"
-  runtime          = "nodejs18.x"
-  source_code_hash = filebase64sha256("run_tests.zip")
-}
-
+# Create CodeBuild Project
 resource "aws_codebuild_project" "build" {
   name          = "serverless-app-build"
   description   = "Build Lambda functions for serverless app"
@@ -210,7 +170,7 @@ resource "aws_codepipeline" "pipeline" {
 
   artifact_store {
     type     = "S3"
-    location = "ronn4-production-bucket"  # Using production bucket for build artifacts
+    location = "ronn4-artifact-bucket"
   }
 
   stage {
@@ -222,8 +182,8 @@ resource "aws_codepipeline" "pipeline" {
       provider         = "S3"
       output_artifacts = ["SourceOutput"]
       configuration = {
-        S3Bucket    = "ronn4-staging-bucket"  # Using staging bucket for the source code
-        S3ObjectKey = "your-source-code.zip"  # Replace with your actual object key
+        S3Bucket    = "ronn4-staging-bucket"
+        S3ObjectKey = "your-source-code.zip"
       }
     }
   }
@@ -267,7 +227,7 @@ resource "aws_codepipeline" "pipeline" {
       provider         = "Lambda"
       input_artifacts  = ["BuildOutput"]
       configuration = {
-        FunctionName = aws_lambda_function.run_tests_function.function_name
+        FunctionName = "run-tests-function"
       }
     }
   }
