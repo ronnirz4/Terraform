@@ -360,7 +360,7 @@ resource "aws_codepipeline" "pipeline" {
       output_artifacts = ["SourceOutput"]
       configuration = {
         S3Bucket    = "ronn4-staging-bucket"
-        S3ObjectKey = "your-source-code.zip"
+        S3ObjectKey = "staging.zip"
       }
       version = "1"
     }
