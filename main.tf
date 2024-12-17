@@ -223,9 +223,51 @@ resource "aws_codebuild_project" "build" {
 }
 
 # Create CodePipeline
+# Create IAM Role for CodePipeline
+resource "aws_iam_role" "codepipeline_service_role" {
+  name = "codepipeline-service-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Principal = {
+          Service = "codepipeline.amazonaws.com"
+        }
+        Effect    = "Allow"
+      },
+    ]
+  })
+}
+
+# Create a policy that allows CodePipeline to assume the CodeDeploy role
+resource "aws_iam_policy" "codepipeline_assume_codedeploy_role" {
+  name        = "codepipeline-assume-codedeploy-role"
+  description = "Policy to allow CodePipeline to assume CodeDeploy service role"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "sts:AssumeRole"
+        Effect   = "Allow"
+        Resource = aws_iam_role.codedeploy_service_role.arn
+      }
+    ]
+  })
+}
+
+# Attach the policy to the CodePipeline service role
+resource "aws_iam_role_policy_attachment" "codepipeline_assume_codedeploy_role_attach" {
+  role       = aws_iam_role.codepipeline_service_role.name
+  policy_arn = aws_iam_policy.codepipeline_assume_codedeploy_role.arn
+}
+
+# Attach the CodePipeline service role to the pipeline
 resource "aws_codepipeline" "pipeline" {
   name     = "serverless-app-pipeline"
-  role_arn = aws_iam_role.codedeploy_service_role.arn
+  role_arn = aws_iam_role.codepipeline_service_role.arn  # Updated to use the new CodePipeline service role
 
   artifact_store {
     type     = "S3"
@@ -244,7 +286,7 @@ resource "aws_codepipeline" "pipeline" {
         S3Bucket    = "ronn4-staging-bucket"
         S3ObjectKey = "your-source-code.zip"
       }
-      version = "1"  # Added version property
+      version = "1"
     }
   }
 
@@ -260,7 +302,7 @@ resource "aws_codepipeline" "pipeline" {
       configuration = {
         ProjectName = aws_codebuild_project.build.name
       }
-      version = "1"  # Added version property
+      version = "1"
     }
   }
 
@@ -276,7 +318,7 @@ resource "aws_codepipeline" "pipeline" {
         ApplicationName      = aws_codedeploy_app.app.name
         DeploymentGroupName  = aws_codedeploy_deployment_group.staging_deployment.deployment_group_name
       }
-      version = "1"  # Added version property
+      version = "1"
     }
   }
 
@@ -292,7 +334,8 @@ resource "aws_codepipeline" "pipeline" {
         ApplicationName      = aws_codedeploy_app.app.name
         DeploymentGroupName  = aws_codedeploy_deployment_group.production_deployment.deployment_group_name
       }
-      version = "1"  # Added version property
+      version = "1"
     }
   }
 }
+
