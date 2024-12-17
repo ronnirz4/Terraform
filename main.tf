@@ -145,12 +145,57 @@ resource "aws_iam_role_policy_attachment" "production_lambda_policy_attach" {
   policy_arn = aws_iam_policy.production_lambda_permissions.arn
 }
 
+# Create CodeBuild Service Role
+resource "aws_iam_role" "codebuild_service_role" {
+  name = "codebuild-service-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Principal = {
+          Service = "codebuild.amazonaws.com"
+        }
+        Effect    = "Allow"
+      },
+    ]
+  })
+}
+
+# CodeBuild Policy for Permissions
+resource "aws_iam_policy" "codebuild_policy" {
+  name        = "codebuild-policy"
+  description = "Permissions for CodeBuild to access required resources"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["s3:GetObject", "s3:PutObject"]
+        Effect   = "Allow"
+        Resource = "arn:aws:s3:::ronn4-artifact-bucket/*"
+      },
+      {
+        Action   = ["sts:AssumeRole"]
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "codebuild_policy_attach" {
+  role       = aws_iam_role.codebuild_service_role.name
+  policy_arn = aws_iam_policy.codebuild_policy.arn
+}
+
 # Create CodeBuild Project
 resource "aws_codebuild_project" "build" {
   name          = "serverless-app-build"
   description   = "Build Lambda functions for serverless app"
   build_timeout = "30"
-  service_role  = aws_iam_role.lambda_exec_role_main.arn
+  service_role  = aws_iam_role.codebuild_service_role.arn  # Use the new service role
 
   source {
     type     = "S3"
