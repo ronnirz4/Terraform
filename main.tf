@@ -147,7 +147,6 @@ resource "aws_iam_role_policy_attachment" "production_lambda_policy_attach" {
 
 # Create CodeBuild Project
 resource "aws_codebuild_project" "build" {
-  provider = aws
   name          = "serverless-app-build"
   description   = "Build Lambda functions for serverless app"
   build_timeout = "30"
@@ -180,7 +179,6 @@ resource "aws_codebuild_project" "build" {
 
 # Create CodePipeline
 resource "aws_codepipeline" "pipeline" {
-  provider = aws
   name     = "serverless-app-pipeline"
   role_arn = aws_iam_role.codedeploy_service_role.arn
 
@@ -201,6 +199,7 @@ resource "aws_codepipeline" "pipeline" {
         S3Bucket    = "ronn4-staging-bucket"
         S3ObjectKey = "your-source-code.zip"
       }
+      version = "1"  # Added version property
     }
   }
 
@@ -216,6 +215,7 @@ resource "aws_codepipeline" "pipeline" {
       configuration = {
         ProjectName = aws_codebuild_project.build.name
       }
+      version = "1"  # Added version property
     }
   }
 
@@ -231,6 +231,7 @@ resource "aws_codepipeline" "pipeline" {
         ApplicationName      = aws_codedeploy_app.app.name
         DeploymentGroupName  = aws_codedeploy_deployment_group.staging_deployment.deployment_group_name
       }
+      version = "1"  # Added version property
     }
   }
 
@@ -246,6 +247,7 @@ resource "aws_codepipeline" "pipeline" {
         ApplicationName      = aws_codedeploy_app.app.name
         DeploymentGroupName  = aws_codedeploy_deployment_group.production_deployment.deployment_group_name
       }
+      version = "1"  # Added version property
     }
   }
 }
